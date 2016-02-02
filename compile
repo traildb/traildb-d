@@ -1,0 +1,1 @@
+dmd -ofexamples traildbc.di examples.d TrailDB.d /usr/local/lib/libtraildb.so -L-rpath=/usr/local/lib/
