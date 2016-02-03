@@ -1,8 +1,10 @@
 module TrailDB;
 
+import std.algorithm;
 import std.conv;
 import std.datetime;
 import std.path : buildPath;
+import std.range;
 import std.stdint;
 import std.stdio;
 import std.string : fromStringz, format, toStringz;
@@ -44,18 +46,12 @@ struct Event
     void* db; // Needed to get item value
     tdb_event* event;
 
-    this(void* db_, tdb_event* event_)
-    {
-        db = db_;
-        event = event_;
-    }
-
     @property ulong timestamp() { return event.timestamp; }
 
     string opIndex(ulong i)
     {
         uint64_t valueLength;
-        auto ret = tdb_get_item_value(db, event.items[i], &valueLength);
+        auto ret = tdb_get_item_value(db, (cast(tdb_item*)(event.items))[i], &valueLength);
         return cast(string)ret[0 .. valueLength];
     }
 }
@@ -66,19 +62,11 @@ struct Trail
     void* db;
     void* cursor;
 
-    this(void* db_, void* cursor_)
-    {
-        db = db_;
-        cursor = cursor;
-    }
-
     int opApply(int delegate(ref Event) foreach_body)
     {
-        uint64_t trailLength = tdb_get_trail_length(cursor);
-
-        foreach(i; 0 .. trailLength)
+        tdb_event* event;
+        while((event = tdb_cursor_next(cursor)) != null)
         {
-            tdb_event* event = tdb_cursor_next(cursor);
             Event e = Event(db, event);
             if(int result = foreach_body(e))
             {
@@ -96,17 +84,17 @@ class TrailDB
     void* cursor;
     bool open = false;
 
-    private uint64_t _numTrails;
-    private uint64_t _numEvents;
-    private uint64_t _numFields;
-    private uint64_t _minTimestamp;
-    private uint64_t _maxTimestamp;
-    private string[] _fieldNames;
-    private uint64_t _vers;
+    immutable uint64_t numTrails;
+    immutable uint64_t numEvents;
+    immutable uint64_t numFields;
+    immutable uint64_t minTimestamp;
+    immutable uint64_t maxTimestamp;
+    immutable string[] fieldNames;
+    immutable uint64_t vers;
 
     this(string db_path)
     {
-        void* db = tdb_init();
+        db = tdb_init();
         if(int err = tdb_open(db, toStringz(db_path)))
         {
             throw new Exception("Failure to open traildb " ~ db_path ~ ".\n\t"
@@ -115,19 +103,15 @@ class TrailDB
 
         open = true;
 
-        _numTrails       = tdb_num_trails(db);
-        _numEvents       = tdb_num_events(db);
-        _numFields       = tdb_num_fields(db);
-        _minTimestamp    = tdb_min_timestamp(db);
-        _maxTimestamp    = tdb_max_timestamp(db);
+        numTrails     = tdb_num_trails(db);
+        numEvents     = tdb_num_events(db);
+        numFields     = tdb_num_fields(db);
+        minTimestamp  = tdb_min_timestamp(db);
+        maxTimestamp  = tdb_max_timestamp(db);
+        fieldNames    = cast(immutable)map!(i => cast(string)fromStringz(tdb_get_field_name(db, cast(uint)i)))(iota(0, numFields)).array();
 
-        foreach(i; 0 .. numFields)
-        {
-            _fieldNames ~= cast(string)fromStringz(tdb_get_field_name(db, cast(uint)i));
-        }
-
-        _vers    = tdb_version(db);
-        cursor  = tdb_cursor_new(db);
+        vers   = tdb_version(db);
+        cursor = tdb_cursor_new(db);
     }
 
     ~this()
@@ -140,18 +124,10 @@ class TrailDB
         if(open)
         {
             tdb_close(db);
+            tdb_cursor_free(cursor);
             open = false;
         }
     }
-
-
-    @property ulong     numTrails()     { return _numTrails; }
-    @property ulong     numEvents()     { return _numEvents; }
-    @property ulong     numFields()     { return _numFields; }
-    @property ulong     minTimestamp()  { return _minTimestamp; }
-    @property ulong     maxTimestamp()  { return _maxTimestamp; }
-    @property string[]  fieldNames()    { return _fieldNames; }
-    @property ulong     vers()          { return _vers; }
 
     ulong fieldLexiconSize(uint field)
     {

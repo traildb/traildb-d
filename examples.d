@@ -15,6 +15,14 @@ int main(string[] args)
     writeln("Field names:       ", DB.fieldNames);
     writeln("Version:           ", DB.vers);
 
+    foreach(trail; DB)
+    {
+        foreach(event; trail)
+        {
+            writeln(event.timestamp, " : ", event[0]);
+        }
+    }
+
     DB.close();
 
     return 0;
