@@ -194,4 +194,66 @@ class TrailDB
 
 class TrailDBConstructor
 {
+    void* cons;
+    string name;
+    bool finalized = false;
+
+    this(string name_, string[] fields)
+    {
+        name = name_;
+        cons = tdb_cons_init();
+        if(int err = tdb_cons_open(cons, cast(char*)name, cast(char**)fields, fields.length))
+        {
+            throw new Exception("Failure to open traildb constructor" ~ name ~ ".\n\t"
+                                ~ cast(string)fromStringz(tdb_error_str(err)));
+        }
+    }
+
+    void append(TrailDB db)
+    {
+        if(int err = tdb_cons_append(cons, db.db))
+        {
+            throw new Exception("Failure to finalize traildb constructor" ~ name ~ ".\n\t"
+                                ~ cast(string)fromStringz(tdb_error_str(err)));
+        }
+    }
+
+    void add(RawUuid uuid, ulong timestamp, string[] values)
+    {
+        ulong[] lengths = values.map!(v => v.length).array();
+
+        if(int err = tdb_cons_add(cons, uuid, timestamp, cast(const char**)values, cast(const ulong*)lengths))
+        {
+            throw new Exception("Failure to finalize traildb constructor" ~ name ~ ".\n\t"
+                                ~ cast(string)fromStringz(tdb_error_str(err)));
+        }
+    }
+
+    void finalize()
+    {
+        if(!finalized)
+        {
+            if(int err = tdb_cons_finalize(cons))
+            {
+                throw new Exception("Failure to finalize traildb constructor" ~ name ~ ".\n\t"
+                                    ~ cast(string)fromStringz(tdb_error_str(err)));
+            }
+            finalized = true;
+        }
+    }
+
+    // Can't throw in destructor
+    ~this()
+    {
+        if(!finalized)
+        {
+            if(int err = tdb_cons_finalize(cons))
+            {
+                writeln("Failure to finalize traildb constructor" ~ name ~ ".\n\t"
+                         ~ cast(string)fromStringz(tdb_error_str(err)));
+            }
+        }
+
+        tdb_cons_close(cons);
+    }
 }
