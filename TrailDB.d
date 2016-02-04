@@ -168,7 +168,6 @@ class TrailDB
         return 0;
     }
 
-    /* Returns the 16 bytes cookie ID at a given position in the DB. */
     RawUuid indexUuid(ulong index)
     {
         auto uuidPtr = tdb_get_uuid(db, index);
@@ -197,12 +196,16 @@ class TrailDBConstructor
     void* cons;
     string name;
     bool finalized = false;
+    ulong[] lengthBuffer;
 
     this(string name_, string[] fields)
     {
         name = name_;
         cons = tdb_cons_init();
-        if(int err = tdb_cons_open(cons, cast(char*)name, cast(char**)fields, fields.length))
+        // Retain pointer to avoid GC madness
+        char*   namePtr = cast(char*)toStringz(name);
+        char*[] fieldsPtrs = cast(char*[])fields.map!(s => toStringz(s)).array();
+        if(int err = tdb_cons_open(cons, namePtr, cast(char**)fieldsPtrs, fields.length))
         {
             throw new Exception("Failure to open traildb constructor" ~ name ~ ".\n\t"
                                 ~ cast(string)fromStringz(tdb_error_str(err)));
@@ -220,9 +223,13 @@ class TrailDBConstructor
 
     void add(RawUuid uuid, ulong timestamp, string[] values)
     {
-        ulong[] lengths = values.map!(v => v.length).array();
+        ulong i = 0;
+        foreach(length; values.map!(v => v.length))
+        {
+            lengthBuffer[i++] = length;
+        }
 
-        if(int err = tdb_cons_add(cons, uuid, timestamp, cast(const char**)values, cast(const ulong*)lengths))
+        if(int err = tdb_cons_add(cons, uuid, timestamp, cast(const char**)values, cast(const ulong*)lengthBuffer))
         {
             throw new Exception("Failure to finalize traildb constructor" ~ name ~ ".\n\t"
                                 ~ cast(string)fromStringz(tdb_error_str(err)));
