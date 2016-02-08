@@ -10,7 +10,7 @@ def package(version):
     ver = version.replace(".", "_")
     release_folder = ver
     local("mkdir %s" % release_folder)
-    local("git clone git@github.com:SemanticSugar/%s.git %s"
+    local("git clone --recursive git@github.com:SemanticSugar/%s.git %s"
           % (REPO_NAME, release_folder))
     with lcd(release_folder):
         local("git fetch origin")
