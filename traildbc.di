@@ -55,7 +55,7 @@ extern(C):
     tdb_error tdb_cons_finalize(void* cons);
 
     tdb_error tdb_uuid_raw(ref const uint8_t[32] hexuuid, ref uint8_t[16] uuid);
-    tdb_error tdb_uuid_hex(ref const uint8_t[16] uuid, ref uint8_t[32] hexuuid);
+    void tdb_uuid_hex(ref const uint8_t[16] uuid, ref uint8_t[32] hexuuid);
 
     void* tdb_init();
     tdb_error tdb_open(void* db, const char* root);

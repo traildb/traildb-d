@@ -31,11 +31,7 @@ RawUuid hexToRaw(HexUuid hexId)
 HexUuid rawToHex(RawUuid rawId)
 {
     HexUuid hexId;
-    if(int err = tdb_uuid_hex(rawId, hexId))
-    {
-        throw new Exception("Failure to convert raw uuid to hex..\n\t"
-                            ~ cast(string)fromStringz(tdb_error_str(err)));
-    }
+    tdb_uuid_hex(rawId, hexId);
     return hexId;
 }
 
