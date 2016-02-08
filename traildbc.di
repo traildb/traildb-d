@@ -24,7 +24,7 @@ struct tdb_event
 align(1):
     uint64_t timestamp;
     uint64_t num_items;
-    tdb_item items[0];
+    tdb_item[0] items;
 }
 
 extern(C):
