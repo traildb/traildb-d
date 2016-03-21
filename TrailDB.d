@@ -193,9 +193,12 @@ class TrailDBConstructor
     string name;
     bool finalized = false;
     ulong[] lengthBuffer;
+    char*[] valuePointersBuffer;
 
     this(string name_, string[] fields)
     {
+        lengthBuffer.length = fields.length;
+        valuePointersBuffer.length = fields.length;
         name = name_;
         cons = tdb_cons_init();
         // Retain pointer to avoid GC madness
@@ -225,7 +228,12 @@ class TrailDBConstructor
             lengthBuffer[i++] = length;
         }
 
-        if(int err = tdb_cons_add(cons, uuid, timestamp, cast(const char**)values, cast(const ulong*)lengthBuffer))
+        foreach(pointer; values.map!(v => v.ptr))
+        {
+            valuePointersBuffer[i++] = cast(char*)pointer;
+        }
+
+        if(int err = tdb_cons_add(cons, uuid, timestamp, cast(const char**)valuePointersBuffer, cast(const ulong*)lengthBuffer))
         {
             throw new Exception("Failure to finalize traildb constructor" ~ name ~ ".\n\t"
                                 ~ cast(string)fromStringz(tdb_error_str(err)));
