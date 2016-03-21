@@ -227,7 +227,7 @@ class TrailDBConstructor
         {
             lengthBuffer[i++] = length;
         }
-
+        i = 0;
         foreach(pointer; values.map!(v => v.ptr))
         {
             valuePointersBuffer[i++] = cast(char*)pointer;
