@@ -1,1 +1,9 @@
 *.pyc
+.dub
+docs.json
+__dummy.html
+*.o
+*.obj
+*.sublime-project
+
+.DS_Store

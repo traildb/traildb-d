@@ -1,0 +1,13 @@
+{
+	"name": "traildb",
+	"description": "D bindings for TrailDB",
+	"targetType": "sourceLibrary",
+    "libs": ["traildb"],
+   	"authors": [
+		"Steven Wright",
+		"Lawrence Christopher Evans",
+		"Ilya Yaroshenko (dub package)"
+	],
+	"copyright": "Copyright © 2016, AdRoll, Inc",
+	"license": "MIT"
+}

@@ -1,9 +1,22 @@
+#!/usr/bin/env dub
+/+ dub.json:
+{
+    "name": "example",
+    "dependencies": {"traildb": {"path": "./"}}
+}
++/
 import std.stdio;
 
 import TrailDB;
 
 int main(string[] args)
 {
+    if(args.length != 2)
+    {
+        writeln("requries one argument: path to a database");
+        return 1;
+    }
+
     string path = args[1];
 
     auto DB = new TrailDB(path);
