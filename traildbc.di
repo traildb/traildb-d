@@ -21,7 +21,6 @@ union tdb_opt_value
 
 struct tdb_event
 {
-align(1):
     uint64_t timestamp;
     uint64_t num_items;
     tdb_item[0] items;
