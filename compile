@@ -1,1 +1,6 @@
-dmd -w -g -ofexamples traildbc.di examples.d TrailDB.d /usr/local/lib/libtraildb.so -L-rpath=/usr/local/lib/
+# Mac setup is ugly for now (TODO: improve)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    dmd -w -g -ofexamples traildbc.di examples.d TrailDB.d /usr/local/lib/libtraildb.dylib
+else
+    dmd -w -g -ofexamples traildbc.di examples.d TrailDB.d /usr/local/lib/libtraildb.so -L-rpath=/usr/local/lib/
+fi

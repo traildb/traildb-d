@@ -1,4 +1,0 @@
-[submodule "traildb"]
-	path = traildb
-	url = git@github.com:SemanticSugar/traildb.git
-	branch = oss-rc1
